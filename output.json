@@ -1,0 +1,158 @@
+[
+    [
+        "en",
+        [
+            [
+                "core.json",
+                {}
+            ],
+            [
+                "translation.json",
+                {}
+            ]
+        ]
+    ],
+    [
+        "hu",
+        [
+            [
+                "core.json",
+                {
+                    "form": {
+                        "select": {
+                            "emptyOption": "Egyik sem"
+                        },
+                        "validation": {
+                            "array": {
+                                "max": "{{path}} mezõben legfeljebb {{max}} elem lehet",
+                                "min": "{{path}} mezõben legalább {{min}} elemnek kell szerepelnie"
+                            },
+                            "object": {
+                                "noUnknown": "{{path}} mezõben nincs meghatározva kulcs {{unknown}}"
+                            },
+                            "boolean": {
+                                "isValue": "{{path}} mezõnek {{value}} értékûnek kell lennie"
+                            },
+                            "date": {
+                                "max": "{{path}} mezõnek korábban kell lennie, mint {{max}}",
+                                "min": "{{path}} mezõnek késõbb kell lennie, mint {{min}}"
+                            },
+                            "number": {
+                                "integer": "{{path}} egész számnak kell lennie",
+                                "negative": "{{path}} negatív számnak kell lennie",
+                                "positive": "{{path}} pozitív számnak kell lennie",
+                                "notEqual": "{{path}} nem lehet egyenlõ a következõvel {{notEqual}}",
+                                "moreThan": "{{path}} nagyobbnak kell lennie, mint {{more}}",
+                                "lessThan": "{{path}} értéknek kevesebbnek kell lennie, mint {{less}}",
+                                "max": "{{path}} értékének kisebbnek vagy egyenlõnek kell lennie, mint {{max}}",
+                                "min": "{{path}} értéknek nagyobbnak vagy egyenlõnek kell lennie, mint {{min}}"
+                            },
+                            "string": {
+                                "uppercase": "{{path}} nagybetûs karakterláncnak kell lennie",
+                                "lowercase": "{{path}} kisbetûs karakterláncnak kell lennie",
+                                "trim": "{{path}} nyírt karakterláncnak kell lennie",
+                                "uuid": "{{path}} érvényes UUID-nek kell lennie",
+                                "url": "{{path}} érvényes URL-nek kell lennie",
+                                "email": "{{path}} érvényes e-mail-címnek kell lennie",
+                                "matches": "{{path}} egyeznie kell a következõvel \"{{regex}}\"",
+                                "max": "{{path}} legfeljebb {{max}} karakterbõl állhat",
+                                "min": "{{path}} legalább {{min}} karakterbõl állhat",
+                                "length": "{{path}} pontosan {{length}} karakterbõl állhat"
+                            },
+                            "mixed": {
+                                "defined": "Meg kell adni a {{path}} szót",
+                                "notOneOf": "{{path}} nem tartalmazhatja a következõ értékeket {{values}}",
+                                "oneOf": "{{path}} értéknek a következõ értékek egyikét kell tartalmaznia {{values}}",
+                                "required": "{{path}} kötelezõ mezõ",
+                                "default": "{{path}} érvénytelen"
+                            },
+                            "this": "ez"
+                        }
+                    },
+                    "essentials": {
+                        "options": {
+                            "heading": "Beállítások"
+                        }
+                    }
+                }
+            ],
+            [
+                "translation.json",
+                {
+                    "import": {
+                        "parser": {
+                            "error": {
+                                "durationAndToDateDefined": "Both duration and end date defined. Please use only one",
+                                "json": {
+                                    "couldntParseFeature": "Couldn't parse feature at index {{index}}: {{error}}",
+                                    "featuresEmpty": "GeoJSON field \"features\" is empty",
+                                    "missingFeatures": "GeoJSON doesn't contain \"features\" field",
+                                    "propertiesNotObject": "\"properties\" field is not an object",
+                                    "multiPolygonNotSupported": "Only single polygon is supported",
+                                    "heightMissing": "Feature properties is missing \"height\" field",
+                                    "propertiesMissing": "Feature is missing \"properties\" field",
+                                    "missingGeometry": "Feature is missing \"geometry\" field",
+                                    "unknownFeatureType": "Unknown feature type \"{{value}}\". Supported values are \"Point\", \"Polygon\" or \"LineString\"",
+                                    "permissionDescriptionMissing": "Zone needs permission description, but none was found for language {{language}}",
+                                    "permissionDescriptionNotObject": "\"permissionDescription\" field is not object",
+                                    "permissionDescriptionFieldMissing": "Zone is missing \"permissionDescription\" field"
+                                },
+                                "csv": {
+                                    "noPolygon": "Geometry doesn't contain any polygons",
+                                    "corridorNotEnoughPoints": "Corridor needs to have at least 2 points in coordinates",
+                                    "polygonNotEnoughPoints": "Polygon needs to have at least 3 points in coordinates",
+                                    "emptyCoordinates": "Coordinates are empty",
+                                    "incorrectLong": "Incorrect value for LONG: {{value}}",
+                                    "incorrectLat": "Incorrect value for LAT: {{value}}",
+                                    "unknownFeatureType": "Unknown feature type \"{{value}}\". Supported values are C, CIRCLE, P, POLYGON, L, LINE or CORRIDOR",
+                                    "permissionDescriptionMissing": "Zone needs permission description, but none was found for language {{language}}",
+                                    "couldntFindField": "Couldn't found field \"{{key}}\"",
+                                    "couldntParseRow": "Couldn't parse row {{row}}: {{error}}"
+                                }
+                            }
+                        }
+                    },
+                    "downloadManual": "Felhasználói kézikönyv",
+                    "form": {
+                        "validation": {
+                            "string": {
+                                "passwordFormat": "A jelszó legalább 8 karakter hosszúságú legyen, tartalmazzon kis- és nagybetűt, számot, valamint szimbólumot. A jelszó létrehozásához csak a következő szimbólumok használhatók: @, +, ! és /.",
+                                "phone": "A {{path}} érvényes telefonszámnak kell lennie.",
+                                "match": "{{path}} nem egyezik"
+                            }
+                        }
+                    },
+                    "list": {
+                        "empty": "Nem található"
+                    },
+                    "geocoder": {
+                        "placeholder": "Cím szerinti keresés..."
+                    },
+                    "navigation": {
+                        "options": {
+                            "label": "Beállítások"
+                        }
+                    },
+                    "undefinedValue": "Nem meghatározott érték",
+                    "no": "Nem",
+                    "yes": "Igen",
+                    "required": "Kötelező",
+                    "language": "Nyelv",
+                    "button": {
+                        "reset": "Visszaállítás",
+                        "confirm": "Megerősítés",
+                        "delete": "Törlés",
+                        "search": "Keresés",
+                        "clear": "Törlés",
+                        "cancel": "Mégsem",
+                        "ok": "OK",
+                        "save": "Mentés",
+                        "close": "Bezárás",
+                        "next": "Következő",
+                        "back": "Vissza"
+                    }
+                }
+            ]
+        ]
+    ]
+]

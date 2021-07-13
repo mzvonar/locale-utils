@@ -1,0 +1,132 @@
+module Data.Locale.JsonOld2 where
+
+import Prelude
+
+import Control.Alt ((<|>))
+import Data.Argonaut (Json, JsonDecodeError(..), caseJson, caseJsonObject, caseJsonString, decodeJson, encodeJson, fromObject, fromString, isObject, isString, jsonEmptyArray, jsonEmptyObject, jsonParser, parseJson, stringify, stringifyWithIndent, toObject, toString)
+import Data.Argonaut.Decode.Class (class DecodeJson)
+import Data.Argonaut.Decode.Error (JsonDecodeError(..))
+import Data.Argonaut.Decode.Generic (genericDecodeJson)
+import Data.Argonaut.Encode.Class (class EncodeJson)
+import Data.Argonaut.Encode.Combinators ((:=), (~>))
+import Data.Argonaut.Encode.Generic (genericEncodeJson)
+import Data.Array ((:))
+import Data.Bifunctor (lmap)
+import Data.Either (Either(..), either, isRight)
+import Data.Foldable (foldr)
+import Data.FoldableWithIndex (foldrWithIndex)
+import Data.Generic.Rep (class Generic)
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
+import Data.Show.Generic (genericShow)
+import Data.Traversable (sequence)
+import Data.Tuple (Tuple(..))
+import Foreign.Object (Object)
+import Foreign.Object as FO
+
+showJson :: forall a. Show a => Either String a -> String
+showJson (Left e) = e
+showJson (Right v) = show v
+
+type TranslationKey = String
+
+data TranslationValue
+  = TranslationValue TranslationKey String
+  | TranslationParent TranslationKey (Array TranslationValue)
+
+data Translation = Translation (Array TranslationValue)
+
+derive instance genericTranslationValue :: Generic TranslationValue _
+
+instance showTranslationValue :: Show TranslationValue where
+  show a = genericShow a
+
+derive instance genericTranslation :: Generic Translation _
+
+instance showTranslation :: Show Translation where
+  show a = genericShow a
+
+
+-- instance decodeJsonTranslation :: DecodeJson Translation where
+--   decodeJson a = genericDecodeJson a
+
+toTranslation :: Json -> Either JsonDecodeError Translation
+toTranslation = caseJsonObject (Left $ TypeMismatch "Translation root is not an object") parse
+  where
+    parse :: Object Json -> Either JsonDecodeError Translation
+    parse o = do
+      t <- toArray o
+      pure $ Translation t
+      -- pure $ case t of
+      --   Right t -> Translation t
+      --   Left e -> e
+
+    toArray :: Object Json -> Either JsonDecodeError (Array TranslationValue)
+    toArray o = sequence $ foldrWithIndex (\k v acc -> (toTranslationValue k v):acc) [] o
+
+toTranslationValue :: String -> Json -> Either JsonDecodeError TranslationValue
+toTranslationValue k = caseJson (l "") (l "Boolean") (l "Number") (\v -> Right $ TranslationValue k v) (l "Array") \o -> toParent k o
+  where
+    l :: forall a. String -> a -> Either JsonDecodeError _
+    l t = \_ -> Left $ AtKey k $ TypeMismatch $ "Unkown translation type " <> show t
+
+toParent :: String -> FO.Object Json -> Either JsonDecodeError TranslationValue
+toParent k o = do
+  p <- sequence $ foldrWithIndex (\k v acc -> (toTranslationValue k v):acc) [] o
+  pure $ TranslationParent k p
+
+instance decodeJsonTranslation :: DecodeJson Translation where
+  decodeJson json = toTranslation json
+
+
+fromTranslation :: Translation -> Json
+fromTranslation (Translation t) = foldr ((~>) <<< fromTranslationValue) jsonEmptyObject t
+
+fromTranslationValue :: TranslationValue -> Tuple String Json
+fromTranslationValue (TranslationValue k v) = k := v
+fromTranslationValue (TranslationParent k vs) = k := (foldr ((~>) <<< fromTranslationValue) jsonEmptyObject vs)
+
+instance encodeJsonTranslation :: EncodeJson Translation where
+  encodeJson a = fromTranslation a
+
+
+
+newtype Namespace = Namespace (Map TranslationKey Translation)
+
+derive instance newtypeNamespace :: Newtype Namespace _
+derive instance genericNamespace :: Generic Namespace _
+derive newtype instance decodeJsonNamespace :: DecodeJson Namespace
+
+instance showNamespace :: Show Namespace where
+  show a = genericShow a
+
+jstring :: String
+jstring = """
+{ 
+  "key": "value",
+  "key2": "value2",
+  "parent": {
+    "subKey": "subValue"
+  }
+}
+  """
+
+json' :: Either String Json
+json' = jsonParser jstring
+
+decodeAsTranslation :: String -> Either JsonDecodeError Translation
+decodeAsTranslation str = do
+    json <- parseJson str
+    -- obj <- (decodeJson =<< parseJson str) :: Either JsonDecodeError Namespace
+    decodeJson json
+
+decoded = decodeAsTranslation jstring
+
+result :: String
+result = either (\l -> "LEFT: " <> show l) (\r -> "RIGHT: " <> show r) $ decoded
+
+-- trans = Parent (Map "")
+
+strResult = either (\l -> "LEFT: " <> show l) (\r -> stringify (encodeJson r)) decoded

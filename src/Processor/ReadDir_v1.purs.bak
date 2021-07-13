@@ -1,0 +1,59 @@
+module Processor.ReadDir where
+
+import Prelude
+
+import Data.Argonaut (JsonDecodeError, decodeJson, parseJson)
+import Data.Array (filter)
+import Data.Bifunctor (lmap)
+import Data.Either (Either)
+import Data.Locale (LocaleMap(..), Locale(..), Namespace)
+import Data.Map (Map, fromFoldable)
+import Data.Traversable (traverse, sequence)
+import Data.Tuple (Tuple(..))
+import Effect.Aff (Aff)
+import Node.Encoding (Encoding(..))
+import Node.FS.Aff (readTextFile, readdir)
+import Node.Path (concat)
+
+data Opts = Opts { inputDir :: String }
+
+readDir :: Opts -> Aff (Either String LocaleMap)
+readDir (Opts opts) = pure <<< map LocaleMap =<< read readLocaleDir opts.inputDir
+    where
+      readLocaleDir :: String -> Aff (Either String Locale)
+      readLocaleDir localePath = pure <<< map Locale =<< read readTranslationFile localePath
+
+      -- read :: forall a. (String -> Aff a) -> String -> Aff (Map String a)
+      -- read f path = do
+      --   paths <- filterFiles <$> readdir path
+      --   fromFoldable <$> traverse (mapNamedTuple (f <<< joinPath path)) paths
+
+      read :: forall a. (String -> Aff (Either String a)) -> String -> Aff (Either String (Map String a))
+      read f path = do
+        paths <- filterFiles <$> readdir path
+        arrMaybeRes <- traverse call paths
+        pure $ do
+          res <- sequence arrMaybeRes
+          pure $ fromFoldable res
+
+        where
+          call :: String -> Aff (Either String (Tuple String a))
+          call p = do 
+            maybeRes <- f $ joinPath path p
+            pure $ do
+                res <- maybeRes
+                pure $ Tuple p res
+
+      joinPath :: String -> String -> String
+      joinPath a b = concat [a, b]
+
+      filterFiles :: Array String -> Array String
+      filterFiles = filter $ notEq ".DS_Store"
+
+      decodeAsTranslation :: String -> Either JsonDecodeError Namespace
+      decodeAsTranslation str = do
+          json <- parseJson str
+          decodeJson json
+
+      readTranslationFile :: String -> Aff (Either String Namespace)
+      readTranslationFile path = lmap show <$> decodeAsTranslation <$> (readTextFile UTF8) path

@@ -1,0 +1,139 @@
+module Data.JsonOld where
+
+import Prelude
+
+import Data.Argonaut (Json, JsonDecodeError, caseJson, decodeJson, encodeJson, fromObject, fromString, isObject, isString, jsonEmptyArray, jsonEmptyObject, jsonParser, parseJson, stringify, stringifyWithIndent, toObject, toString)
+import Data.Argonaut.Decode.Class (class DecodeJson)
+import Data.Argonaut.Decode.Error (JsonDecodeError(..))
+import Data.Argonaut.Decode.Generic (genericDecodeJson)
+import Data.Argonaut.Encode.Class (class EncodeJson)
+import Data.Argonaut.Encode.Combinators ((:=), (~>))
+import Data.Argonaut.Encode.Generic (genericEncodeJson)
+import Data.Array ((:))
+import Data.Bifunctor (lmap)
+import Data.Either (Either(..), either, isRight)
+import Data.Foldable (foldr)
+import Data.FoldableWithIndex (foldrWithIndex)
+import Data.Generic.Rep (class Generic)
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
+import Data.Show.Generic (genericShow)
+import Data.Traversable (sequence)
+import Data.Tuple (Tuple(..))
+import Foreign.Object (Object)
+import Foreign.Object as FO
+
+showJson :: forall a. Show a => Either String a -> String
+showJson (Left e) = e
+showJson (Right v) = show v
+
+type TranslationKey = String
+
+data Translation 
+    = Translation String
+    | Parent (Map TranslationKey Translation) 
+
+derive instance genericTranslation :: Generic Translation _
+
+instance showTranslation :: Show Translation where
+  show a = genericShow a
+
+toTranslation :: String -> Json -> Either JsonDecodeError Translation
+toTranslation k = caseJson (l "") (l "Boolean") (l "Number") (Right <<< Translation) (l "Array") toParent
+  where
+    l :: forall a. String -> a -> Either JsonDecodeError _
+    l t = \_ -> Left $ AtKey k $ TypeMismatch $ "Unkown translation type " <> show t
+
+toParent :: FO.Object Json -> Either JsonDecodeError Translation
+toParent o = 
+  let p = sequence $ Map.fromFoldable $ (FO.toUnfoldable (FO.mapWithKey (\k a -> toTranslation k a) o) :: Array _)
+  in
+    case p of
+      Right p' -> Right $ Parent p'
+      Left e -> Left e
+
+-- instance decodeJsonTranslation :: DecodeJson Translation where
+--   decodeJson a = genericDecodeJson a
+
+instance decodeJsonTranslation :: DecodeJson Translation where
+  decodeJson json = toTranslation "_root_" =<< (decodeJson json)
+
+
+fromTranslation :: Translation -> Json
+fromTranslation (Translation v) = fromString v
+fromTranslation (Parent p) = fromObject $ fromParent p
+
+fromParent :: Map String Translation -> Object Json
+fromParent p = foldrWithIndex (\k v acc -> FO.insert k (fromTranslation v) acc) FO.empty p
+  -- where
+  --   converted :: Map String Json
+  --   converted = map fromTranslation p
+
+  --   unfoldable = Map.toUnfoldable (map Map.toUnfoldable p)
+
+  --   obj :: Object Json
+  --   obj = FO.fromFoldable unfoldable
+
+-- fromParent :: Map String Translation -> Object Json
+-- fromParent p = FO.fromFoldable $ map fromTranslation p
+  -- let
+  --   o :: Object (Tuple String Translation)
+  --   o = FO.fromFoldable p
+  -- in
+  --   encodeJson o
+  
+  -- where
+  --   fromMap :: Map TranslationKey Translation -> Object Json
+  --   fromMap m = FO.fromFoldable m
+
+instance encodeJsonTranslation :: EncodeJson Translation where
+  encodeJson (Translation a) = "key" := a ~> jsonEmptyObject
+  -- encodeJson (Parent p) = foldrWithIndex (\k v acc -> (k := v) ~> acc) jsonEmptyObject p
+  encodeJson (Parent p) =
+    "name" := "nnn"       -- inserts "name": "Tom"
+      ~> "age" := "25"   -- inserts "age": "25" (if Nothing, does not insert anything)
+      ~> "team" := "team" -- inserts "team": "Red Team"
+      ~> jsonEmptyObject
+
+-- type Translation = String
+
+newtype Namespace = Namespace (Map TranslationKey Translation)
+
+derive instance newtypeNamespace :: Newtype Namespace _
+derive instance genericNamespace :: Generic Namespace _
+-- derive newtype instance encodeJsonNamespace :: EncodeJson Namespace
+derive newtype instance decodeJsonNamespace :: DecodeJson Namespace
+
+instance showNamespace :: Show Namespace where
+  show a = genericShow a
+
+jstring :: String
+jstring = """
+{ 
+  "key": "value",
+  "key2": "value2",
+  "parent": {
+    "subKey": "subValue"
+  }
+}
+  """
+
+json' :: Either String Json
+json' = jsonParser jstring
+
+decodeAsMap :: String -> Either JsonDecodeError (Map String Translation)
+decodeAsMap str = do
+    json <- parseJson str
+    -- obj <- (decodeJson =<< parseJson str) :: Either JsonDecodeError Namespace
+    obj <- decodeJson json
+    pure $ Map.fromFoldable $ (FO.toUnfoldable obj :: Array _)
+
+decoded = decodeAsMap jstring
+
+result :: String
+result = either (\l -> "LEFT: " <> show l) (\r -> "RIGHT: " <> show r) $ decoded
+
+
+strResult = either (\l -> "LEFT: " <> show l) (\r -> stringify (encodeJson r)) decoded

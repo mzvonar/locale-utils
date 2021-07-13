@@ -1,0 +1,39 @@
+module Processor.ReadDirV0 where
+
+import Prelude
+
+import Data.Array (filter)
+import Data.Locale (LocaleMap(..), LocaleName, Locale(..), NamespaceName, Namespace)
+import Data.Map (fromFoldable)
+import Data.Traversable (sequence, traverse)
+import Data.Tuple (Tuple(..))
+import Effect.Aff (Aff)
+import Effect.Aff.Class (class MonadAff)
+import Node.Encoding (Encoding(..))
+import Node.FS.Aff (readTextFile, readdir)
+import Node.Path (concat)
+
+data Opts = Opts { inputDir :: String }
+
+readDir :: Opts -> Aff LocaleMap
+readDir (Opts opts) = do
+  locales <- filterFiles =<< readdir opts.inputDir
+  pure <<< LocaleMap <<< fromFoldable =<< traverse (mapNamedTuple $ readLocaleDir <<< joinPath opts.inputDir) locales
+
+    where
+      readLocaleDir :: String -> Aff Locale -- (Tuple LocaleName Locale)
+      readLocaleDir localePath = do
+        namespaces <- filterFiles =<< readdir localePath
+        pure <<< Locale <<< fromFoldable =<< traverse (mapNamedTuple (readTextFile UTF8 <<< joinPath localePath)) namespaces
+
+      filterFiles :: Array String -> Aff (Array String)
+      filterFiles = pure <<< filter (\f -> f /= ".DS_Store")
+
+      joinPath :: String -> String -> String
+      joinPath a b = concat [a, b]
+
+      mapNamedTuple :: forall a b m. Monad m => (a -> m b) -> a -> m (Tuple a b)
+      mapNamedTuple f a = do
+        b <- f a
+        pure $ Tuple a b
+
