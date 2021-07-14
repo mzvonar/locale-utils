@@ -5,30 +5,34 @@ import Prelude
 import Data.Argonaut (decodeJson, parseJson)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.Locale (LocaleMap)
-import Data.Maybe (Maybe(..))
+import Data.Generic.Rep (class Generic)
+import Data.Show.Generic (genericShow)
+import Data.Locale (LocaleMap, Namespace)
+import Data.String (trim)
 import Effect.Aff (Aff, makeAff, throwError, nonCanceler, effectCanceler)
-import Effect.Class (liftEffect)
-import Effect.Exception (error, throw)
+import Effect.Exception (error)
 import Effect.Ref as Ref
 import Node.Encoding (Encoding(..))
 import Node.Path (FilePath)
 import Node.Process (stdin, stdinIsTTY)
 import Node.Stream (Readable, onDataString, onEnd, onError, pause)
 import Processor.ReadDir (Opts(..), readDir) as P
-import Text.PrettyPrint.Leijen (text)
 
 data Input
   = DirInput FilePath
   | StdInput
 
-readInput :: Input -> Aff LocaleMap
+derive instance Generic Input _
+instance Show Input where
+  show = genericShow
+
+readInput :: Input -> Aff (LocaleMap Namespace)
 readInput (DirInput inputDir) = P.readDir $ P.Opts { inputDir }
 readInput StdInput = do
   stdInRes <- readText stdin
   decoded <- pure do
       text <- stdInRes
-      parsed <- lmap show $ parseJson text
+      parsed <- lmap show $ parseJson $ trim text
       lmap show $ decodeJson parsed
   -- decoded <- (lmap show (decodeJson <=< parseJson)) =<< stdInRes
   case decoded of

@@ -2,27 +2,27 @@ module Data.Locale where
   
 import Prelude
 
-import Data.Argonaut (Json, JsonDecodeError(..), caseJson, caseJsonObject, caseJsonString, decodeJson, encodeJson, fromObject, fromString, isObject, isString, jsonEmptyArray, jsonEmptyObject, jsonParser, parseJson, stringify, stringifyWithIndent, toObject, toString)
+import Data.Argonaut (Json, caseJson, caseJsonObject, decodeJson, encodeJson, jsonEmptyObject, jsonParser, parseJson, stringify)
 import Data.Argonaut.Decode.Class (class DecodeJson)
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
-import Data.Argonaut.Decode.Generic (genericDecodeJson)
 import Data.Argonaut.Encode.Class (class EncodeJson)
 import Data.Argonaut.Encode.Combinators ((:=), (~>))
-import Data.Argonaut.Encode.Generic (genericEncodeJson)
 import Data.Array ((:))
 import Data.Either (Either(..), either)
-import Data.Foldable (foldr)
+import Data.Foldable (class Foldable, foldMap, foldMapDefaultR, foldlDefault, foldr, foldl, foldrDefault)
 import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
 import Data.Newtype (class Newtype)
 import Data.Show.Generic (genericShow)
-import Data.Traversable (sequence)
-import Data.Tuple (Tuple(..))
+import Data.Traversable (class Traversable, sequence, traverseDefault)
+import Data.Tuple (Tuple)
 import Foreign.Object (Object)
 import Foreign.Object as FO
+import Math (e)
 
 type TranslationKey = String
+
 data TranslationValue
   = TranslationValue TranslationKey String
   | TranslationParent TranslationKey (Array TranslationValue)
@@ -32,10 +32,10 @@ data TranslationValue
 newtype Namespace = Namespace (Array TranslationValue)
 
 type NamespaceName = String
-newtype Locale = Locale (Map NamespaceName Namespace)
+newtype Locale a = Locale (Map NamespaceName a)
 
 type LocaleName = String
-newtype LocaleMap = LocaleMap (Map LocaleName Locale)
+newtype LocaleMap a = LocaleMap (Map LocaleName (Locale a))
 
 
 
@@ -51,34 +51,74 @@ instance showTranslationValue :: Show TranslationValue where
 
 
 
-
+derive instance Newtype Namespace _
 derive instance genericNamespace :: Generic Namespace _
 instance showNamespace :: Show Namespace where
   show a = genericShow a
 
 
-derive instance Newtype Locale _
-derive instance Generic Locale _
-derive newtype instance EncodeJson Locale
-derive newtype instance DecodeJson Locale
+derive instance Newtype (Locale a) _
+derive instance Generic (Locale a) _
+derive newtype instance Functor Locale
+derive newtype instance Foldable Locale
+derive newtype instance Traversable Locale
+-- instance Functor Locale where
+--   map :: forall a b. (a -> b) -> Locale a -> Locale b
+--   map f (Locale l) = map f l 
 
-instance showLocale :: Show Locale where
+-- instance Foldable Locale where
+--   foldMap f (Locale l) = foldMap f l
+--   foldl = foldlDefault
+--   foldr = foldrDefault
+
+derive newtype instance EncodeJson (Locale Namespace)
+derive newtype instance DecodeJson (Locale Namespace)
+
+instance showLocale :: Show a => Show (Locale a) where
   show = genericShow
 
-derive instance Newtype LocaleMap _
-derive instance genericLocaleMap :: Generic LocaleMap _
+derive instance Newtype (LocaleMap a) _
+derive instance genericLocaleMap :: Generic (LocaleMap a) _
 
-instance showLocaleMap :: Show LocaleMap where
+instance showLocaleMap :: Show a => Show (LocaleMap a) where
   show = genericShow
 
-derive newtype instance EncodeJson LocaleMap
-derive newtype instance DecodeJson LocaleMap
+instance Functor LocaleMap where
+  map :: forall a b. (a -> b) -> LocaleMap a -> LocaleMap b
+  map f (LocaleMap l) = LocaleMap $ map (map f) l 
+
+-- instance Foldable LocaleMap where
+--   -- foldMap :: forall a m. Monoid m => (a -> m) -> LocaleMap a -> m
+--   -- foldMap f (LocaleMap lm) = foldMap f lm
+--   -- foldl = foldlDefault
+--   -- foldr = foldrDefault
+--   foldr f b (LocaleMap lm) = foldr f b ?lm
+--   foldl f b (LocaleMap lm) = foldl f b lm
+--   foldMap = foldMapDefaultR
+
+-- instance Traversable LocaleMap where
+--   sequence :: forall a m. Applicative m => LocaleMap (m a) -> m (LocaleMap a)
+--   sequence (LocaleMap lm) = do
+--     let lm' = map sequence lm
+    
+--     pure ?lm'
+--     -- case (sequence $ ) of
+--     --   Left e -> Left e
+--     --   Right lm' -> pure $ LocaleMap lm'
+
+--   traverse = traverseDefault
+    
+
+derive newtype instance EncodeJson (LocaleMap Namespace)
+derive newtype instance DecodeJson (LocaleMap Namespace)
 
 
 {- JSON encoding/decoding -}
 instance decodeJsonNamespace :: DecodeJson Namespace where
   decodeJson json = toTranslation json
 
+instance encodeJsonTranslation :: EncodeJson Namespace where
+  encodeJson a = fromTranslation a
 
 toTranslation :: Json -> Either JsonDecodeError Namespace
 toTranslation = caseJsonObject (Left $ TypeMismatch "Translation root is not an object") parse
@@ -105,9 +145,6 @@ toParent k o = do
   p <- sequence $ foldrWithIndex (\k v acc -> (toTranslationValue k v):acc) [] o
   pure $ TranslationParent k p
 
-
-instance encodeJsonTranslation :: EncodeJson Namespace where
-  encodeJson a = fromTranslation a
 
 fromTranslation :: Namespace -> Json
 fromTranslation (Namespace t) = foldr ((~>) <<< fromTranslationValue) jsonEmptyObject t

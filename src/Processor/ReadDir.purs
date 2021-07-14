@@ -18,7 +18,7 @@ import Node.Path (concat)
 
 data Opts = Opts { inputDir :: String }
 
-readDir :: Opts -> Aff LocaleMap
+readDir :: Opts -> Aff (LocaleMap Namespace)
 readDir (Opts opts) = do
   res <- read readLocaleDir opts.inputDir
   case res of
@@ -26,7 +26,7 @@ readDir (Opts opts) = do
     (Left e) -> throwError $ error e
 
     where
-      readLocaleDir :: String -> Aff (Either String Locale)
+      readLocaleDir :: String -> Aff (Either String (Locale Namespace))
       readLocaleDir localePath = pure <<< map Locale =<< read readTranslationFile localePath
 
       read :: forall a. (String -> Aff (Either String a)) -> String -> Aff (Either String (Map String a))

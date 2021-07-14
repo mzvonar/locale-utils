@@ -3,16 +3,9 @@ module Command.Output where
 import Prelude
 
 import Control.Alt ((<|>))
-import Data.Either (Either(..))
 import Data.Foldable (fold)
-import Data.Locale (LocaleMap)
-import Effect (Effect)
-import Effect.Aff (Aff, runAff_, throwError)
-import Effect.Class (liftEffect)
-import Effect.Console (logShow)
-import Options.Applicative (Parser, execParser, fullDesc, help, helper, info, long, metavar, progDesc, short, strOption, (<**>))
+import Options.Applicative (Parser, help, long, metavar, short, strOption)
 import Processor.Output (Output(..))
-import Processor.Output (output) as P
 
 data Opts = Opts { output :: Output }
 

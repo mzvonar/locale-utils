@@ -5,7 +5,7 @@ import Prelude
 import Data.Argonaut (encodeJson, stringify)
 import Data.Either (Either(..))
 import Data.Foldable (fold)
-import Data.Locale (LocaleMap)
+import Data.Locale (LocaleMap, Namespace)
 import Effect (Effect)
 import Effect.Aff (Aff, throwError, runAff_)
 import Effect.Console (log)
@@ -29,7 +29,7 @@ readDirOpts = ado
                 ]
   in Opts { inputDir }
 
-readDir :: Aff LocaleMap
+readDir :: Aff (LocaleMap Namespace)
 readDir = P.readDir =<< liftEffect (fixPath =<< execParser opts)
   where
     opts = info (readDirOpts <**> helper)

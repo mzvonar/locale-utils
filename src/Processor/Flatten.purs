@@ -3,17 +3,15 @@ module Processor.Flatten where
 import Prelude
 
 import Data.Array (concatMap)
-import Data.Locale (Locale(..), LocaleMap(..), Namespace(..), TranslationValue(..), TranslationKey)
+import Data.Locale (LocaleMap, Namespace(..), TranslationKey, TranslationValue(..))
 import Data.Maybe (Maybe(..))
+import Data.Newtype (over)
 
-flatten :: LocaleMap -> LocaleMap
-flatten (LocaleMap localeMap) = LocaleMap $ map flattenLocale localeMap
+flatten :: LocaleMap Namespace -> LocaleMap Namespace
+flatten = map flattenNamespace
   where
-    flattenLocale :: Locale -> Locale
-    flattenLocale (Locale locale) = Locale $ map flattenNamespace locale
-
     flattenNamespace :: Namespace -> Namespace
-    flattenNamespace (Namespace translations) = Namespace $ concatMap (flattenTranslation Nothing) translations
+    flattenNamespace = over Namespace $ concatMap (flattenTranslation Nothing)
 
     flattenTranslation :: Maybe TranslationKey -> TranslationValue -> Array TranslationValue
     flattenTranslation parentKey (TranslationValue k v) = [TranslationValue (parentKey `concat` k) v]
