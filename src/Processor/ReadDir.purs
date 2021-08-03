@@ -6,7 +6,7 @@ import Data.Argonaut (JsonDecodeError, decodeJson, parseJson)
 import Data.Array (filter)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.Locale (LocaleMap(..), Locale(..), Namespace)
+import Data.Locale (LocaleMap(..), Locale(..), NestedNamespace)
 import Data.Map (Map, fromFoldable)
 import Data.Traversable (traverse, sequence)
 import Data.Tuple (Tuple(..))
@@ -18,7 +18,7 @@ import Node.Path (concat)
 
 data Opts = Opts { inputDir :: String }
 
-readDir :: Opts -> Aff (LocaleMap Namespace)
+readDir :: Opts -> Aff (LocaleMap NestedNamespace)
 readDir (Opts opts) = do
   res <- read readLocaleDir opts.inputDir
   case res of
@@ -26,7 +26,7 @@ readDir (Opts opts) = do
     (Left e) -> throwError $ error e
 
     where
-      readLocaleDir :: String -> Aff (Either String (Locale Namespace))
+      readLocaleDir :: String -> Aff (Either String (Locale NestedNamespace))
       readLocaleDir localePath = pure <<< map Locale =<< read readTranslationFile localePath
 
       read :: forall a. (String -> Aff (Either String a)) -> String -> Aff (Either String (Map String a))
@@ -51,10 +51,10 @@ readDir (Opts opts) = do
       filterFiles :: Array String -> Array String
       filterFiles = filter $ notEq ".DS_Store"
 
-      decodeAsTranslation :: String -> Either JsonDecodeError Namespace
+      decodeAsTranslation :: String -> Either JsonDecodeError NestedNamespace
       decodeAsTranslation str = do
           json <- parseJson str
           decodeJson json
 
-      readTranslationFile :: String -> Aff (Either String Namespace)
+      readTranslationFile :: String -> Aff (Either String NestedNamespace)
       readTranslationFile path = lmap show <$> decodeAsTranslation <$> (readTextFile UTF8) path

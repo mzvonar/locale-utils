@@ -5,7 +5,7 @@ import Prelude
 import Control.Alt ((<|>))
 import Data.Either (Either(..))
 import Data.Foldable (fold)
-import Data.Locale (LocaleMap, Namespace)
+import Data.Locale (LocaleMap, NestedNamespace)
 import Effect (Effect)
 import Effect.Aff (Aff, runAff_, throwError)
 import Effect.Class (liftEffect)
@@ -37,7 +37,7 @@ readInputOpts = ado
   input <- inputOption
   in Opts { input }
 
-readInput :: Aff (LocaleMap Namespace)
+readInput :: Aff (LocaleMap NestedNamespace)
 readInput = do
   (Opts opts) <- liftEffect $ execParser parserOpts
   P.readInput opts.input

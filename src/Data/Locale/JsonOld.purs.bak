@@ -99,14 +99,14 @@ instance encodeJsonTranslation :: EncodeJson Translation where
 
 -- type Translation = String
 
-newtype Namespace = Namespace (Map TranslationKey Translation)
+newtype NestedNamespace = NestedNamespace (Map TranslationKey Translation)
 
-derive instance newtypeNamespace :: Newtype Namespace _
-derive instance genericNamespace :: Generic Namespace _
--- derive newtype instance encodeJsonNamespace :: EncodeJson Namespace
-derive newtype instance decodeJsonNamespace :: DecodeJson Namespace
+derive instance newtypeNestedNamespace :: Newtype NestedNamespace _
+derive instance genericNestedNamespace :: Generic NestedNamespace _
+-- derive newtype instance encodeJsonNestedNamespace :: EncodeJson NestedNamespace
+derive newtype instance decodeJsonNestedNamespace :: DecodeJson NestedNamespace
 
-instance showNamespace :: Show Namespace where
+instance showNestedNamespace :: Show NestedNamespace where
   show a = genericShow a
 
 jstring :: String
@@ -126,7 +126,7 @@ json' = jsonParser jstring
 decodeAsMap :: String -> Either JsonDecodeError (Map String Translation)
 decodeAsMap str = do
     json <- parseJson str
-    -- obj <- (decodeJson =<< parseJson str) :: Either JsonDecodeError Namespace
+    -- obj <- (decodeJson =<< parseJson str) :: Either JsonDecodeError NestedNamespace
     obj <- decodeJson json
     pure $ Map.fromFoldable $ (FO.toUnfoldable obj :: Array _)
 

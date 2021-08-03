@@ -7,7 +7,7 @@ import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
-import Data.Locale (LocaleMap, Namespace)
+import Data.Locale (LocaleMap, NestedNamespace)
 import Data.String (trim)
 import Effect.Aff (Aff, makeAff, throwError, nonCanceler, effectCanceler)
 import Effect.Exception (error)
@@ -26,7 +26,7 @@ derive instance Generic Input _
 instance Show Input where
   show = genericShow
 
-readInput :: Input -> Aff (LocaleMap Namespace)
+readInput :: Input -> Aff (LocaleMap NestedNamespace)
 readInput (DirInput inputDir) = P.readDir $ P.Opts { inputDir }
 readInput StdInput = do
   stdInRes <- readText stdin

@@ -3,7 +3,7 @@ module Processor.ReadDirV0 where
 import Prelude
 
 import Data.Array (filter)
-import Data.Locale (LocaleMap(..), LocaleName, Locale(..), NamespaceName, Namespace)
+import Data.Locale (LocaleMap(..), LocaleName, Locale(..), NestedNamespace, NestedNamespace)
 import Data.Map (fromFoldable)
 import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(..))

@@ -16,7 +16,7 @@ import Data.Either (Either(..), either, isRight)
 import Data.Foldable (foldr)
 import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Generic.Rep (class Generic)
-import Data.Locale (Translation(..), TranslationValue(..), TranslationKey)
+import Data.Locale (Translation(..), NestedTranslationValue(..), TranslationKey)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
@@ -41,24 +41,24 @@ showJson (Right v) = show v
 
 
 fromTranslation :: Translation -> Json
-fromTranslation (Translation t) = foldr ((~>) <<< fromTranslationValue) jsonEmptyObject t
+fromTranslation (Translation t) = foldr ((~>) <<< fromNestedTranslationValue) jsonEmptyObject t
 
-fromTranslationValue :: TranslationValue -> Tuple String Json
-fromTranslationValue (TranslationValue k v) = k := v
-fromTranslationValue (TranslationParent k vs) = k := (foldr ((~>) <<< fromTranslationValue) jsonEmptyObject vs)
+fromNestedTranslationValue :: NestedTranslationValue -> Tuple String Json
+fromNestedTranslationValue (NestedTranslationValue k v) = k := v
+fromNestedTranslationValue (TranslationParent k vs) = k := (foldr ((~>) <<< fromNestedTranslationValue) jsonEmptyObject vs)
 
 instance encodeJsonTranslation :: EncodeJson Translation where
   encodeJson a = fromTranslation a
 
 
 
-newtype Namespace = Namespace (Map TranslationKey Translation)
+newtype NestedNamespace = NestedNamespace (Map TranslationKey Translation)
 
-derive instance newtypeNamespace :: Newtype Namespace _
-derive instance genericNamespace :: Generic Namespace _
-derive newtype instance decodeJsonNamespace :: DecodeJson Namespace
+derive instance newtypeNestedNamespace :: Newtype NestedNamespace _
+derive instance genericNestedNamespace :: Generic NestedNamespace _
+derive newtype instance decodeJsonNestedNamespace :: DecodeJson NestedNamespace
 
-instance showNamespace :: Show Namespace where
+instance showNestedNamespace :: Show NestedNamespace where
   show a = genericShow a
 
 jstring :: String
@@ -78,7 +78,7 @@ json' = jsonParser jstring
 decodeAsTranslation :: String -> Either JsonDecodeError Translation
 decodeAsTranslation str = do
     json <- parseJson str
-    -- obj <- (decodeJson =<< parseJson str) :: Either JsonDecodeError Namespace
+    -- obj <- (decodeJson =<< parseJson str) :: Either JsonDecodeError NestedNamespace
     decodeJson json
 
 decoded = decodeAsTranslation jstring
