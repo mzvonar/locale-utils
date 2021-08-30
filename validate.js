@@ -1,1 +1,0 @@
-require("./output/Command.Validate/index.js").main()

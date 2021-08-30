@@ -27,11 +27,11 @@ type Output = (Reader Env) String
 
 derive instance Eq MessageType
 
-logResults :: ValidatedLocaleMap -> Effect Unit
-logResults lm = Console.log $ renderResults lm
+logResults :: Filter -> ValidatedLocaleMap -> Effect Unit
+logResults f lm = Console.log $ renderResults f lm
 
-renderResults :: ValidatedLocaleMap -> String
-renderResults lm = runReader (results lm) { level: 0, filter: Just Error }
+renderResults :: Filter -> ValidatedLocaleMap -> String
+renderResults filter lm = runReader (results lm) { level: 0, filter }
 
 results :: ValidatedLocaleMap -> Output
 results (ValidLocaleMap _) = output' Info "Locales are valid"

@@ -1,0 +1,11 @@
+{
+    "button": {
+        "back": "Spat",
+        "next": "Dalej",
+        "close": "Zavriet"
+    },
+    "language": "Jazyk",
+    "required": "Povinne",
+    "yes": "Ano",
+    "no": "Nie"
+}

@@ -1,0 +1,1 @@
+require("../output/Command.Flatten/index.js").main()

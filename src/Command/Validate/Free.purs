@@ -6,19 +6,18 @@ import Prelude
 import Ansi.Codes as Codes
 import Ansi.Output as Ansi
 import Control.Monad.Free (Free, liftF, foldFree)
-import Control.Monad.Reader (Reader, ReaderT, ask, lift, local, runReader, runReaderT)
-import Control.Monad.Writer (WriterT, execWriterT, runWriterT, tell)
+import Control.Monad.State (StateT, gets, modify_, runStateT)
+import Control.Monad.Writer (WriterT, execWriterT, tell)
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
+import Data.List.NonEmpty (NonEmptyList)
 import Data.Locale (TranslationKey)
 import Data.Locale.Translation (key)
-import Data.Locale.Translation.Validated (InvalidTranslation(..), TranslationError(..), ValidTranslation(..), ValidatedLocale(..), ValidatedLocaleMap(..), ValidatedNamespace(..), ValidatedTranslation, VariableType(..), isValidLocale)
+import Data.Locale.Translation.Validated (InvalidTranslation(..), TranslationError(..), ValidTranslation(..), ValidatedLocale(..), ValidatedLocaleMap(..), ValidatedNamespace(..), ValidatedTranslation, VariableType(..))
 import Data.Maybe (Maybe(..))
 import Data.Monoid (power)
-import Data.List.NonEmpty (NonEmptyList)
 import Data.Tuple (Tuple(..))
 import Effect.Console as Console
-import Processor.Output (output)
 
 data MessageType = Info | Error
 type Filter = Maybe MessageType
@@ -27,6 +26,7 @@ derive instance Eq MessageType
 
 data ResultF a
   = SetFilter Filter a
+  | GetFilter (Filter -> a)
   | Result ValidatedLocaleMap a
   | LocaleResult ValidatedLocale a
   | NamespaceResult ValidatedNamespace a
@@ -40,6 +40,9 @@ type Result = Free ResultF
 
 setFilter :: Filter -> Result Unit
 setFilter a = liftF $ SetFilter a unit
+
+getFilter :: Result Filter
+getFilter = liftF $ GetFilter identity
 
 result :: ValidatedLocaleMap -> Result Unit
 result a = liftF $ Result a unit
@@ -57,15 +60,15 @@ translationErrorResult :: TranslationKey -> TranslationError -> Result Unit
 translationErrorResult k a = liftF $ TranslationErrorResult (Tuple k a) unit
 
 type Level = Int
-type Env = 
+type State = 
   { level :: Level
   , filter :: Filter
   }
-type Output a = ReaderT Env (WriterT String Effect) a
+type Output a = StateT State (WriterT String Effect) a
 
 renderToConsole :: Result Unit -> Effect Unit
 renderToConsole r = do
-  string <- execWriterT $ runReaderT (interpret r) { level: 0, filter: Nothing }
+  string <- execWriterT $ runStateT (interpret r) { level: 0, filter: Nothing }
   Console.log string
 
 interpret :: Result ~> Output
@@ -74,7 +77,11 @@ interpret = foldFree go
   go :: ResultF ~> Output
   go = case _ of
     SetFilter a next -> do
-      local (\env -> env { filter = a }) $ pure next
+      modify_ \s -> s { filter = a }
+      pure next      
+    GetFilter next -> do
+      filter <- getFilter'
+      pure $ next filter
     Result a next -> do
       renderResult a 
       pure next
@@ -90,12 +97,18 @@ interpret = foldFree go
     TranslationErrorResult (Tuple k a) next -> do
       renderTranslationErrorResult k a 
       pure next
+    
+
+  getFilter' :: Output Filter
+  getFilter' = gets _.filter
+    
 
   renderResult :: ValidatedLocaleMap -> Output Unit
-  renderResult (ValidLocaleMap _) = output' "Locales are valid"
+  renderResult (ValidLocaleMap _) = output' Info "Locales are valid"
   renderResult (InvalidLocales lm) = do
-    output' "Problems found:"
-    indent $ foldMap renderLocaleResult lm
+    output' Error "Problems found:"
+    indent
+    foldMap renderLocaleResult lm
 
   renderLocaleResult :: ValidatedLocale -> Output Unit
   renderLocaleResult (ValidLocale k _) = output Info $ "Locale " <> k <> " is valid"
@@ -103,7 +116,9 @@ interpret = foldFree go
   renderLocaleResult (MissingLocale k) = output Error $ "Missing locale " <> variable k
   renderLocaleResult (InvalidNamespaces k ns) = do
     output Error $ "Locale " <> variable k <> error " has invalid namespaces:"
-    indent $ foldMap renderNamespaceResult ns
+    indent 
+    foldMap renderNamespaceResult ns
+    unindent
 
   renderNamespaceResult :: ValidatedNamespace -> Output Unit
   renderNamespaceResult (ValidNamespace k _) = output Info $ "Namespace " <> k <> " is valid"
@@ -112,7 +127,9 @@ interpret = foldFree go
   renderNamespaceResult (UnknownNamespaceError k e) = output Error $ "Namespace " <> variable k <> error " error: " <> e
   renderNamespaceResult (InvalidTranslations k ts) = do
     output Error $ "Namespace " <> variable k <> error " has invalid translations:"
-    indent $ foldMap renderTranslationResult ts
+    indent
+    foldMap renderTranslationResult ts
+    unindent
 
   renderTranslationResult :: ValidatedTranslation -> Output Unit
   renderTranslationResult (Right (ValidTranslation t)) = output Info $ "Translation " <> key t <> " is valid"
@@ -134,20 +151,26 @@ interpret = foldFree go
       varType PluralVariable = " plural "
       varType OnlySingularVariable = " "
 
-  indent :: ∀ a. Output a -> Output a
-  indent = local $ \env@{level} -> env { level = level + 1}
+  indent :: Output Unit
+  indent = modify_ \s -> s { level = s.level + 1}
+
+  unindent :: Output Unit
+  unindent = modify_ \s -> s { level = max (s.level - 1) 0}
 
   output :: MessageType -> String -> Output Unit
   output t str = do
-    {filter} <- ask
+    filter <- getFilter'
     if shouldOutput filter t
-      then output' $ withTypeColor t str
+      then output' t str
       else pure unit
 
-  output' :: String -> Output Unit
-  output' str = do
-    {level} <- ask
-    tell $ (power "  " level) <> str <> "\n"
+  output' :: MessageType -> String -> Output Unit
+  output' t str = do
+    level <- getLevel
+    tell $ (power "  " level) <> withTypeColor t str <> "\n"
+
+  getLevel :: Output Level
+  getLevel = gets _.level
 
   info :: String -> String
   info = withTypeColor Info
@@ -180,40 +203,3 @@ showResults :: Filter -> ValidatedLocaleMap -> Result Unit
 showResults f lm = do
   setFilter f
   result lm
-
--- showResults lm = do
---   filter <- askFilter
---   if isValid lm
---     then render "Locales are valid"
---     else do
---       render "Problems found:"
---       foldMap render lm
-
--- data ContentF a
---   = Content String a
---   | Group (Unit -> a)
-
--- derive instance Functor ContentF
-
--- type Content = Free ContentF
-
--- content :: String -> Content Unit
--- content s = liftF $ Content s unit
-
--- group :: Content Unit
--- group = liftF $ Group identity
-
--- renderToConsole :: Content ~> Effect
--- renderToConsole = foldFree go
---   where
---   go :: ContentF ~> Effect
---   go = case _ of
---     -- Just log any speak statement
---     Content str next -> do
---       Console.log str
---       pure next
---     -- Reply to anything with "I am Groot", but maybe
---     -- we could also get input from a terminal.
---     Group next -> do
---       Console.log "GROUP: "
---       pure $ next unit

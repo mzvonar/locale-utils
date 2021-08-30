@@ -1,0 +1,1 @@
+require("../output/Command.Output/index.js").main();

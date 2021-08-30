@@ -4,6 +4,7 @@ import Prelude
 
 import Command.Output (outputOption)
 import Command.ReadInput (inputOption)
+import Command.Validate.FT as FT
 import Command.Validate.Free as Free
 import Command.Validate.MTL as MTL
 import Control.Monad.Reader (runReaderT)
@@ -71,7 +72,7 @@ validate = do
   source <- I.readInput opts.source
   target <- I.readInput opts.input
   let results = (P.validate `on` flatten) source target
-  liftEffect $ useFree results
+  liftEffect $ useFt results
 
   where
     parserOpts = info (validateOpts <**> helper)
@@ -79,8 +80,9 @@ validate = do
      <> progDesc "Validates locales"
       )
 
-    useMtl = MTL.logResults
+    useMtl = MTL.logResults (Just MTL.Error)
     useFree = Free.renderToConsole <<< Free.showResults (Just Free.Error)
+    useFt = FT.renderToConsole <<< FT.showResults (Just FT.Error)
 
 logResults :: ValidatedLocaleMap -> Effect Unit
 logResults results =
