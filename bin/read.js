@@ -1,1 +1,1 @@
-require("../output/Command.ReadDir/index.js").main();
+require("../output/Command.Read/index.js").main();

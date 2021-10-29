@@ -2,7 +2,7 @@ module Command.Flatten where
   
 import Prelude
 
-import Command.Output (outputOption)
+import Command.Output (outputOption')
 import Command.ReadInput (inputOption)
 import Data.Either (Either(..))
 import Effect (Effect)
@@ -21,7 +21,7 @@ data Opts = Opts
 flattenOpts :: Parser Opts
 flattenOpts = ado
   input <- inputOption
-  output <- outputOption
+  output <- outputOption' "./localeProcess/flatenned"
   in Opts { input, output }
 
 

@@ -1,0 +1,11 @@
+{
+  "button": {
+      "close": "Close",
+      "next": "Next",
+      "back": "Back"
+  },
+  "language": "Language",
+  "required": "Required",
+  "yes": "Yes",
+  "no": "No"
+}

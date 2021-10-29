@@ -1,0 +1,48 @@
+{
+  "name": "locale-utils",
+  "version": "0.0.0",
+  "description": "Set of utils for working with locale translations",
+  "main": "index.js",
+  "repository": "git@github.com:mzvonar/locale-utils.git",
+  "author": "Martin Zvonar <riffmaker@gmail.com>",
+  "license": "MIT",
+  "bin": {
+    "flatten": "bin/flatten",
+    "merge": "bin/merge",
+    "read": "bin/read",
+    "save": "bin/save",
+    "unflatten": "bin/unflatten",
+    "validate": "bin/validate"
+  },
+  "scripts": {
+    "start": "yarn node index.server.js",
+    "dev": "nodemon \"yarn node index.js\"",
+    "bundle:build": "spago build --purs-args '--codegen corefn'",
+    "bundle:parcel": "parcel build dev/index.html --public-url '.' --no-source-maps",
+    "bundle": "yarn run bundle:build && yarn run bundle:parcel",
+    "serve-dev": "parcel dev/index.html --open"
+  },
+  "staticFiles": {
+    "staticPath": [
+      {
+        "staticPath": "locale",
+        "staticOutDir": "locale/",
+        "watcherGlob": "**"
+      }
+    ]
+  },
+  "devDependencies": {
+    "@originjs/vite-plugin-commonjs": "^1.0.0",
+    "@rollup/plugin-replace": "^3.0.0",
+    "nodemon": "^2.0.12",
+    "parcel-plugin-static-files-copy": "^2.6.0",
+    "rollup-plugin-node-globals": "^1.4.0",
+    "rollup-plugin-polyfill-node": "^0.7.0",
+    "vite": "^2.5.3",
+    "vite-plugin-node": "^0.0.14"
+  },
+  "dependencies": {
+    "connect": "^3.7.0",
+    "xhr2": "^0.2.1"
+  }
+}

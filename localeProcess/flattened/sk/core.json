@@ -1,0 +1,10 @@
+{
+    "form.select.emptyOption": "Prazdne",
+    "form.validation.mixed.defined": "Nviem co {{path}} znamena",
+    "form.validation.mixed.notOneOf": "{{path}} nemoze byt jedna z hodnot: {{values}}",
+    "form.validation.mixed.oneOf": "{{path}} musi byt jedna z hodnot: {{values}}",
+    "form.validation.mixed.required": "{{path}} je povinne",
+    "form.validation.mixed.default": "{{path}} defaultne",
+    "form.validation.this": "toto",
+    "essentials.options.heading": "Nastavanie"
+}

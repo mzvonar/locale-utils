@@ -26,7 +26,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, runAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Options.Applicative (Parser, execParser, fullDesc, helper, info, progDesc, strOption, short, long, metavar, help, (<**>))
+import Options.Applicative (Parser, execParser, fullDesc, help, helper, info, long, metavar, progDesc, short, value, showDefault, strOption, (<**>))
 import Processor.Flatten (flatten)
 import Processor.Output as O
 import Processor.ReadInput as I
@@ -49,6 +49,8 @@ sourceOption =
     , short 's'
     , metavar "STRING"
     , help "Directory with source locales to use as base for validation (usually extracted keys)"
+    , value "./localeProcess/extracted"
+    , showDefault
     ]
   )
 

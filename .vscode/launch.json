@@ -1,0 +1,6 @@
+{
+    "type": "node",
+    "request": "launch",
+    "name": "Launch test",
+    "runtimeVersion": "14.17.0"
+  }

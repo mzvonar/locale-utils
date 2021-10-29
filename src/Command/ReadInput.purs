@@ -23,7 +23,7 @@ inputOption = stdInput <|> dirInput
     dirInput = DirInput <$> (strOption $ fold
                     [ long "input-dir"
                     , short 'i'
-                    , metavar "STRING"
+                    , metavar "inputDir"
                     , help "Locale directory to read"
                     ]
                   )

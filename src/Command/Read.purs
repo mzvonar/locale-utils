@@ -1,4 +1,4 @@
-module Command.ReadDir where
+module Command.Read where
 
 import Prelude
 
@@ -12,25 +12,31 @@ import Effect.Console (log)
 import Effect.Class (liftEffect)
 import Node.Path (concat, isAbsolute, normalize)
 import Node.Process (cwd)
-import Options.Applicative (Parser, (<**>), helper, fullDesc, progDesc, info, strOption, long, short, metavar, help, execParser, showDefault, value)
+import Options.Applicative (Parser, execParser, fullDesc, help, helper, info, metavar, progDesc, showDefault, strArgument, value, (<**>))
 import Processor.ReadDir (Opts(..))
 import Processor.ReadDir (readDir) as P
 
 
 readDirOpts :: Parser Opts
 readDirOpts = ado
-  inputDir <- strOption $ fold
-                [ long "input-dir"
-                , short 'i'
-                , metavar "STRING"
+  inputDir <- strArgument $ fold
+                [ metavar "INPUT_DIR"
                 , help "Locale directory to read"
                 , showDefault
                 , value "./locale"
                 ]
+  -- inputDir <- strOption $ fold
+  --               [ long "input-dir"
+  --               , short 'i'
+  --               , metavar "STRING"
+  --               , help "Locale directory to read"
+  --               , showDefault
+  --               , value "./locale"
+  --               ]
   in Opts { inputDir }
 
-readDir :: Aff (LocaleMap NestedNamespace)
-readDir = P.readDir =<< liftEffect (fixPath =<< execParser opts)
+read :: Aff (LocaleMap NestedNamespace)
+read = P.readDir =<< liftEffect (fixPath =<< execParser opts)
   where
     opts = info (readDirOpts <**> helper)
       ( fullDesc
@@ -56,5 +62,5 @@ main = runAff_ (\res -> do
   case res of
     Right res'' -> log $ stringify $ encodeJson res''
     Left e -> throwError e
-  ) readDir
+  ) read
 

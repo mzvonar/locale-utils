@@ -3,7 +3,7 @@ module Processor.Output where
 import Prelude
 
 import Data.Argonaut (encodeJson, stringify)
-import Data.Locale (class NamespaceClass, LocaleMap, NestedNamespace)
+import Data.Locale (class NamespaceClass, LocaleMap)
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
 import Effect.Aff (Aff)

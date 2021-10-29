@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Localizator v2</title>
+    
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <script>
+      if(typeof window.global === 'undefined') {
+        window.global = window;
+      }
+    </script>
+    <!-- <script type="module" src="/@vite/client"></script> -->
+  </head>
+  <body>
+    <h3>From root</h3>
+    <script src="./index.client.js" type="module"></script>
+  </body>
+</html>

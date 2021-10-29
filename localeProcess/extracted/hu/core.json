@@ -1,0 +1,22 @@
+{
+    "essentials": {
+        "options": {
+            "heading": "Beállítások"
+        }
+    },
+    "form": {
+        "validation": {
+            "this": "ez",
+            "mixed": {
+                "default": "{{path}} érvénytelen",
+                "required": "{{path}} kötelezõ mezõ",
+                "oneOf": "{{path}} értéknek a következõ értékek egyikét kell tartalmaznia {{values}}",
+                "notOneOf": "{{path}} nem tartalmazhatja a következõ értékeket {{values}}",
+                "defined": "Meg kell adni a {{path}} szót"
+            }
+        },
+        "select": {
+            "emptyOption": "Egyik sem"
+        }
+    }
+}

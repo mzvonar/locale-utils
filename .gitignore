@@ -11,3 +11,12 @@
 /locale
 /locale-output
 .idea
+
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+.parcel-cache

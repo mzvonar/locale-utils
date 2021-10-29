@@ -2,7 +2,7 @@ module Command.Unflatten where
   
 import Prelude
 
-import Command.Output (outputOption)
+import Command.Output (outputOption')
 import Command.ReadInput (inputOption)
 import Data.Either (Either(..))
 import Effect (Effect)
@@ -24,7 +24,7 @@ data Opts = Opts
 unflattenOpts :: Parser Opts
 unflattenOpts = ado
   input <- inputOption
-  output <- outputOption
+  output <- outputOption' "./localeProcess/unflattened"
   in Opts { input, output }
 
 

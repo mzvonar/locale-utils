@@ -1,0 +1,15 @@
+{
+  "essentials": {
+      "options": {
+          "heading": "Settings"
+      }
+  },
+  "form": {
+      "select": {
+          "emptyOption": "Empty"
+      },
+      "validation": {
+          "this": "this"
+      }
+  }
+}
